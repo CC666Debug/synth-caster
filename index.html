@@ -1,0 +1,912 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Synth Caster</title>
+<meta name="description" content="Hundreds of synthwave, darkwave, Halloween and chiptune radio streams. Search, sort, shuffle, and cast to Nest speakers.">
+<meta name="theme-color" content="#0d0a1a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  :root {
+    --bg: #0d0a1a;
+    --surface: #17122b;
+    --surface-2: #221a3d;
+    --line: #342a57;
+    --text: #f1ecff;
+    --muted: #a79dc9;
+    --accent: #ff3fa4;
+    --accent-2: #33e1ff;
+    --accent-ink: #1a0514;
+    --good: #6ff0a8;
+    --warn: #ffcf5c;
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg);
+    background-image: linear-gradient(180deg, rgba(255, 63, 164, .10), transparent 260px);
+    color: var(--text);
+    font: 16px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    min-height: 100dvh;
+    padding: max(16px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+    -webkit-tap-highlight-color: transparent;
+  }
+  main { max-width: 560px; min-width: 0; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  h1 { font-size: 19px; margin: 0; letter-spacing: .2px; white-space: nowrap; cursor: default; user-select: none; }
+  h1 span { background: linear-gradient(90deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  @media (max-width: 380px) { h1 { font-size: 17px; } .cast-btn { padding: 9px 12px; } }
+  button { font: inherit; color: inherit; border: 0; cursor: pointer; }
+  button:disabled { opacity: .45; cursor: default; }
+
+  .cast-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--surface-2); border: 1px solid var(--line);
+    padding: 10px 14px; border-radius: 999px; max-width: 60%;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .cast-btn svg { flex: none; width: 20px; height: 20px; }
+  .cast-btn.connected { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .cast-btn.connecting svg { animation: pulse 1s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .3; } }
+  .cast-btn.nudge { border-color: var(--accent); animation: glow 1.2s ease-in-out infinite; }
+  @keyframes glow { 50% { box-shadow: 0 0 0 4px rgba(255, 63, 164, .35); } }
+  @media (prefers-reduced-motion: reduce) { .cast-btn.nudge { animation: none; } }
+
+  .notice {
+    background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--warn);
+    padding: 12px 14px; border-radius: 12px; color: var(--muted); font-size: 14px;
+  }
+  .notice[hidden] { display: none; }
+
+  .now {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 16px; display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 14px; align-items: center;
+  }
+  .badge {
+    width: 64px; height: 64px; border-radius: 12px; display: grid; place-items: center; font-size: 30px;
+    background: linear-gradient(135deg, #3a1a5c, #13304a);
+  }
+  .now .label { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+  .now .title { font-weight: 650; font-size: 17px; margin-top: 2px; overflow-wrap: anywhere; }
+  .now .state { font-size: 13px; margin-top: 4px; color: var(--muted); }
+  .now .state.live { color: var(--good); }
+
+  .controls {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 12px 14px; display: flex; flex-direction: column; gap: 8px;
+  }
+  .row { display: flex; align-items: center; gap: 6px; }
+  .row.main { justify-content: center; gap: 14px; }
+  .play {
+    width: 58px; height: 58px; border-radius: 50%; flex: none;
+    background: var(--accent); color: var(--accent-ink); display: grid; place-items: center;
+  }
+  .play svg { width: 26px; height: 26px; }
+  .icon-btn { background: none; padding: 10px; display: grid; place-items: center; color: var(--muted); border-radius: 50%; }
+  .icon-btn svg { width: 24px; height: 24px; }
+  .icon-btn[hidden] { display: none; }
+  .icon-btn.on { color: var(--accent-2); background: rgba(51, 225, 255, .12); }
+  input[type=range] { flex: 1; accent-color: var(--accent); height: 28px; min-width: 0; }
+
+  .finder { display: flex; flex-direction: column; gap: 10px; position: sticky; top: 0; z-index: 2;
+    background: var(--bg); padding: 8px 0 6px; margin: -8px 0 -6px; }
+  .search { position: relative; }
+  .search input {
+    width: 100%; font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--line);
+    border-radius: 12px; padding: 11px 38px 11px 40px; outline: none;
+  }
+  .search input:focus { border-color: var(--accent-2); }
+  .search svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--muted); }
+  .search button { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); background: none; color: var(--muted); padding: 8px 10px; font-size: 18px; line-height: 1; }
+  .search button[hidden] { display: none; }
+  .chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip {
+    flex: none; background: var(--surface); border: 1px solid var(--line); border-radius: 999px;
+    padding: 7px 12px; font-size: 14px; white-space: nowrap; color: var(--muted);
+  }
+  .chip.on { background: var(--surface-2); border-color: var(--accent); color: var(--text); }
+  .chip b { font-weight: 400; opacity: .7; margin-left: 4px; font-size: 12px; }
+  .sortbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--muted); }
+  .sortbar select {
+    font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--line);
+    border-radius: 8px; padding: 6px 8px;
+  }
+
+  .list { display: flex; flex-direction: column; gap: 6px; }
+  .st {
+    display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--line);
+    border-radius: 12px; padding: 4px 4px 4px 12px; min-height: 52px;
+  }
+  .st.active { border-color: var(--accent); background: var(--surface-2); }
+  .st.failed .nm { opacity: .55; }
+  .st .pick { flex: 1; min-width: 0; text-align: left; background: none; padding: 8px 0; display: flex; flex-direction: column; gap: 2px; }
+  .st .nm { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .st .gr { font-size: 12px; color: var(--muted); }
+  .st .dot { display: none; width: 8px; height: 8px; border-radius: 50%; background: var(--good); margin-right: 6px; vertical-align: middle; }
+  .st.active .dot { display: inline-block; }
+  .star { background: none; font-size: 20px; padding: 10px; color: var(--muted); line-height: 1; }
+  .star.on { color: var(--warn); }
+  .empty { text-align: center; color: var(--muted); padding: 30px 10px; }
+  .more { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; color: var(--muted); }
+
+  dialog { background: var(--surface); color: var(--text); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; width: min(520px, calc(100vw - 32px)); }
+  dialog::backdrop { background: rgba(0, 0, 0, .6); }
+  #diagText { max-height: 55vh; overflow: auto; font-size: 11px; white-space: pre-wrap; background: var(--bg); padding: 8px; border-radius: 8px; }
+  .dlg-btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; }
+  .dlg-btns button { background: var(--surface-2); border: 1px solid var(--line); padding: 8px 12px; border-radius: 8px; }
+  footer { text-align: center; color: var(--muted); font-size: 12px; padding-top: 6px; }
+  footer a { color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>🌆 <span>Synth Caster</span></h1>
+    <button class="cast-btn" id="castBtn" aria-label="Cast to a speaker">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M1 18v3h3c0-1.66-1.34-3-3-3zm0-4v2c2.76 0 5 2.24 5 5h2c0-3.87-3.13-7-7-7zm0-4v2a9 9 0 0 1 9 9h2c0-6.08-4.93-11-11-11zm20-7H3c-1.1 0-2 .9-2 2v3h2V5h18v14h-7v2h7c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>
+      <span id="castLabel">Speakers</span>
+    </button>
+  </header>
+
+  <div class="notice" id="notice" hidden></div>
+
+  <section class="now" aria-live="polite">
+    <div class="badge" id="badge">🌆</div>
+    <div>
+      <div class="label" id="where">Ready</div>
+      <div class="title" id="nowName">Pick a station, or tap shuffle</div>
+      <div class="state" id="nowState"></div>
+    </div>
+  </section>
+
+  <section class="controls">
+    <div class="row main">
+      <button class="icon-btn" id="shuffleBtn" aria-label="Shuffle" title="Shuffle">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10.59 9.17 5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg>
+      </button>
+      <button class="icon-btn" id="prevBtn" aria-label="Previous station" title="Previous station">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
+      </button>
+      <button class="play" id="playBtn" aria-label="Play">
+        <svg viewBox="0 0 24 24" fill="currentColor" id="playIcon"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+      <button class="icon-btn" id="nextBtn" aria-label="Next station" title="Next station">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+      </button>
+      <button class="icon-btn" id="disconnectBtn" aria-label="Disconnect speaker" title="Disconnect speaker" hidden>
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+      </button>
+    </div>
+    <div class="row">
+      <button class="icon-btn" id="muteBtn" aria-label="Mute">
+        <svg viewBox="0 0 24 24" fill="currentColor" id="volIcon"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+      </button>
+      <input type="range" id="vol" min="0" max="100" value="80" aria-label="Volume">
+    </div>
+  </section>
+
+  <section class="finder">
+    <div class="search">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+      <input type="search" id="q" placeholder="Search stations" autocomplete="off" enterkeyhint="search" aria-label="Search stations">
+      <button id="qClear" aria-label="Clear search" hidden>×</button>
+    </div>
+    <div class="chips" id="chips" role="tablist" aria-label="Genres"></div>
+    <div class="sortbar">
+      <span id="count"></span>
+      <label>Sort
+        <select id="sort">
+          <option value="az">A → Z</option>
+          <option value="za">Z → A</option>
+          <option value="genre">Genre</option>
+          <option value="recent">Recently played</option>
+          <option value="favs">Favorites first</option>
+          <option value="random">Random</option>
+        </select>
+      </label>
+    </div>
+  </section>
+
+  <section class="list" id="list" aria-label="Stations"></section>
+
+  <footer>A free fan app. Streams belong to their stations. <span id="ver"></span></footer>
+</main>
+
+<dialog id="diagDlg">
+  <div id="diagText"></div>
+  <div class="dlg-btns">
+    <button id="diagClear">Clear</button>
+    <button id="diagCopy">Copy log</button>
+    <button onclick="this.closest('dialog').close()">Close</button>
+  </div>
+</dialog>
+
+<script>
+const VERSION = '1.0.0';
+const $ = id => document.getElementById(id);
+const els = {
+  castBtn: $('castBtn'), castLabel: $('castLabel'), notice: $('notice'), where: $('where'),
+  nowName: $('nowName'), nowState: $('nowState'), badge: $('badge'), playBtn: $('playBtn'), playIcon: $('playIcon'),
+  prevBtn: $('prevBtn'), nextBtn: $('nextBtn'), shuffleBtn: $('shuffleBtn'), disconnectBtn: $('disconnectBtn'),
+  muteBtn: $('muteBtn'), volIcon: $('volIcon'), vol: $('vol'), q: $('q'), qClear: $('qClear'),
+  chips: $('chips'), sort: $('sort'), count: $('count'), list: $('list'),
+};
+$('ver').textContent = 'v' + VERSION;
+
+function safeGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+function safeSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+function loadJSON(k, fallback) { try { return JSON.parse(safeGet(k)) || fallback; } catch (e) { return fallback; } }
+
+// ── Diagnostic log (tap the title 5 times) ──────
+const DIAG_KEY = 'sc_diag';
+let diagLines = loadJSON(DIAG_KEY, []);
+function diag(msg) {
+  const t = new Date();
+  diagLines.push(t.toLocaleTimeString() + '  ' + msg);
+  if (diagLines.length > 300) diagLines = diagLines.slice(-300);
+  safeSet(DIAG_KEY, JSON.stringify(diagLines));
+}
+diag('── opened · Synth Caster v' + VERSION + ' · ' + navigator.userAgent);
+
+const GENRES = [
+  { id: 'Halloween', label: '🎃 Halloween', icon: '🎃' },
+  { id: 'Synthwave / Retrowave', label: '🌆 Synthwave', icon: '🌆' },
+  { id: 'Darkwave / Goth / Industrial', label: '🦇 Darkwave & Goth', icon: '🦇' },
+  { id: 'Chiptune / Game', label: '👾 Chiptune & Game', icon: '👾' },
+];
+const iconFor = s => (GENRES.find(g => g.id === s.group) || {}).icon || '📻';
+const shortGenre = s => ((GENRES.find(g => g.id === s.group) || {}).label || s.group).replace(/^\S+ /, '');
+
+let STATIONS = [];
+let favs = new Set(loadJSON('sc_favs', []));
+let recent = loadJSON('sc_recent', {});      // id -> last played time
+let failed = loadJSON('sc_failed', {});      // id -> time it last failed to play
+let filter = safeGet('sc_filter') || 'all';
+let sortBy = safeGet('sc_sort') || 'az';
+let shuffle = safeGet('sc_shuffle') === '1';
+let query = '';
+let selected = null;           // the station shown in Now playing
+let history = [];              // stations played this visit, for the Previous button
+let randomOrder = new Map();   // id -> random number, for the Random sort
+const PAGE = 120;              // stations drawn at a time (the list is long)
+let shown = PAGE;
+
+els.sort.value = sortBy;
+
+// ── Station list: search, genre, sort ───────────
+function norm(s) { return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
+
+function visible() {
+  const words = norm(query).split(/\s+/).filter(Boolean);
+  let list = STATIONS.filter(s => {
+    if (filter === 'favs' && !favs.has(s.id)) return false;
+    if (filter !== 'all' && filter !== 'favs' && s.group !== filter) return false;
+    return words.every(w => s.search.includes(w));
+  });
+  const byName = (a, b) => a.sortName.localeCompare(b.sortName);
+  const cmp = {
+    az: byName,
+    za: (a, b) => byName(b, a),
+    genre: (a, b) => GENRES.findIndex(g => g.id === a.group) - GENRES.findIndex(g => g.id === b.group) || byName(a, b),
+    recent: (a, b) => (recent[b.id] || 0) - (recent[a.id] || 0) || byName(a, b),
+    favs: (a, b) => favs.has(b.id) - favs.has(a.id) || byName(a, b),
+    random: (a, b) => randomOrder.get(a.id) - randomOrder.get(b.id),
+  }[sortBy] || byName;
+  return list.sort(cmp);
+}
+
+function renderChips() {
+  const counts = { all: STATIONS.length, favs: STATIONS.filter(s => favs.has(s.id)).length };
+  GENRES.forEach(g => { counts[g.id] = STATIONS.filter(s => s.group === g.id).length; });
+  const chips = [{ id: 'all', label: 'All' }, { id: 'favs', label: '★ Favorites' }, ...GENRES];
+  els.chips.innerHTML = '';
+  chips.forEach(c => {
+    const b = document.createElement('button');
+    b.className = 'chip' + (filter === c.id ? ' on' : '');
+    b.setAttribute('role', 'tab');
+    b.setAttribute('aria-selected', filter === c.id);
+    b.innerHTML = `${c.label}<b>${counts[c.id]}</b>`;
+    b.addEventListener('click', () => { filter = c.id; safeSet('sc_filter', filter); shown = PAGE; renderChips(); renderList(); });
+    els.chips.appendChild(b);
+  });
+}
+
+function esc(t) { return t.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+function renderList() {
+  const list = visible();
+  els.count.textContent = list.length === 1 ? '1 station' : list.length + ' stations';
+  els.list.innerHTML = '';
+  if (!list.length) {
+    els.list.innerHTML = `<div class="empty">${filter === 'favs' && !query ? 'No favorites yet. Tap ☆ on a station to add it.' : 'No stations match.'}</div>`;
+    return;
+  }
+  const frag = document.createDocumentFragment();
+  list.slice(0, shown).forEach(s => {
+    const row = document.createElement('div');
+    row.className = 'st' + (s === playingStation() ? ' active' : '') + (failed[s.id] ? ' failed' : '');
+    row.innerHTML = `<button class="pick"><span class="nm"><span class="dot"></span>${esc(s.name)}</span>`
+      + `<span class="gr">${iconFor(s)} ${esc(shortGenre(s))}${failed[s.id] ? ' · didn’t play last time' : s.insecure ? ' · older link, may not play on phones' : ''}</span></button>`
+      + `<button class="star${favs.has(s.id) ? ' on' : ''}" aria-label="${favs.has(s.id) ? 'Remove from' : 'Add to'} favorites">${favs.has(s.id) ? '★' : '☆'}</button>`;
+    row.querySelector('.pick').addEventListener('click', () => chooseStation(s));
+    row.querySelector('.star').addEventListener('click', () => toggleFav(s));
+    frag.appendChild(row);
+  });
+  if (list.length > shown) {
+    const more = document.createElement('button');
+    more.className = 'more';
+    more.textContent = `Show ${Math.min(PAGE, list.length - shown)} more (${list.length - shown} left)`;
+    more.addEventListener('click', () => { shown += PAGE; renderList(); });
+    frag.appendChild(more);
+  }
+  els.list.appendChild(frag);
+}
+
+function toggleFav(s) {
+  favs.has(s.id) ? favs.delete(s.id) : favs.add(s.id);
+  safeSet('sc_favs', JSON.stringify([...favs]));
+  renderChips(); renderList();
+}
+
+let qTimer = null;
+els.q.addEventListener('input', () => {
+  els.qClear.hidden = !els.q.value;
+  clearTimeout(qTimer);
+  qTimer = setTimeout(() => { query = els.q.value; shown = PAGE; renderList(); }, 120);
+});
+els.qClear.addEventListener('click', () => { els.q.value = ''; query = ''; els.qClear.hidden = true; shown = PAGE; renderList(); els.q.focus(); });
+els.sort.addEventListener('change', () => {
+  sortBy = els.sort.value; safeSet('sc_sort', sortBy);
+  if (sortBy === 'random') reshuffleOrder();
+  shown = PAGE; renderList();
+});
+function reshuffleOrder() { randomOrder = new Map(STATIONS.map(s => [s.id, Math.random()])); }
+
+// ── Choosing stations, shuffle, next and previous ─
+function chooseStation(s, fromSkip = false) {
+  // Tapping the station that's already playing stops it.
+  if (!fromSkip && s === playingStation()) { els.playBtn.click(); return; }
+  if (selected && selected !== s) history.push(selected);
+  if (history.length > 50) history = history.slice(-50);
+  selected = s;
+  safeSet('sc_station', s.id);
+  recent[s.id] = Date.now();
+  safeSet('sc_recent', JSON.stringify(recent));
+  if (castConnected()) loadStation(s);
+  else playHere(s);
+  render();
+}
+
+// The next station: a random one from the list you're looking at (shuffle), or the one below.
+function nextStation() {
+  let list = visible();
+  if (!list.length) list = STATIONS;
+  if (shuffle || !selected) {
+    // Avoid the last 20 played and ones that just failed, when there are enough others.
+    const recentIds = new Set(history.slice(-20).map(s => s.id).concat(selected ? [selected.id] : []));
+    // Older http-only links usually can't play on a phone (the app is a secure page), so shuffle skips them there.
+    const playable = s => !failed[s.id] && (castConnected() || !s.insecure);
+    let pool = list.filter(s => !recentIds.has(s.id) && playable(s));
+    if (!pool.length) pool = list.filter(s => s !== selected && playable(s));
+    if (!pool.length) pool = list.filter(s => s !== selected);
+    if (!pool.length) pool = list;
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+  const i = list.indexOf(selected);
+  return list[(i + 1) % list.length];
+}
+function goNext() { chooseStation(nextStation(), true); }
+function goPrev() {
+  if (shuffle || !selected) {
+    const s = history.pop();
+    if (s) { selected = null; chooseStation(s, true); }
+    return;
+  }
+  const list = visible();
+  const i = list.indexOf(selected);
+  chooseStation(list[(i - 1 + list.length) % list.length], true);
+}
+els.nextBtn.addEventListener('click', goNext);
+els.prevBtn.addEventListener('click', goPrev);
+els.shuffleBtn.addEventListener('click', () => {
+  shuffle = !shuffle;
+  safeSet('sc_shuffle', shuffle ? '1' : '0');
+  diag('shuffle ' + (shuffle ? 'on' : 'off'));
+  // Nothing playing yet: shuffle starts a random station straight away.
+  if (shuffle && !playingStation() && !castActive()) goNext();
+  render();
+});
+
+// A station that won't play: remember it, and with shuffle on, move to another one.
+let skipsInARow = 0;
+function stationFailed(s, why) {
+  diag('FAILED ' + s.name + ' · ' + why);
+  failed[s.id] = Date.now();
+  safeSet('sc_failed', JSON.stringify(failed));
+  if (shuffle && skipsInARow < 8) {
+    skipsInARow++;
+    showNotice(s.name + ' isn’t playing right now. Shuffling to another station…');
+    setTimeout(goNext, 800);
+  } else {
+    skipsInARow = 0;
+    showNotice(s.name + ' isn’t playing right now. Try another station, or tap ⏭.');
+  }
+  renderList();
+}
+function stationWorked(s) {
+  skipsInARow = 0;
+  if (failed[s.id]) { delete failed[s.id]; safeSet('sc_failed', JSON.stringify(failed)); renderList(); }
+}
+
+// ── Casting (Google Cast, Chrome only) ──────────
+let ctx = null, player = null, ctrl = null;
+let speakerLoading = null, speakerStation = null, speakerRetries = 0, speakerReconnecting = false;
+let carryOver = null;
+
+window.__onGCastApiAvailable = function (available) {
+  diag('cast library ready: ' + (available && window.cast && cast.framework ? 'yes' : 'NO'));
+  if (!available || !window.cast || !cast.framework) {
+    els.castLabel.textContent = 'Unavailable';
+    els.castBtn.title = 'Casting to speakers needs Chrome (Android or computer). Listening on this device works everywhere.';
+    return;
+  }
+  ctx = cast.framework.CastContext.getInstance();
+  ctx.setOptions({
+    receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
+    autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED,
+    resumeSavedSession: true,
+  });
+  afterUnjam();
+  player = new cast.framework.RemotePlayer();
+  ctrl = new cast.framework.RemotePlayerController(player);
+  ctrl.addEventListener(cast.framework.RemotePlayerEventType.ANY_CHANGE, () => { onSpeakerState(); render(); });
+  ctx.addEventListener(cast.framework.CastContextEventType.CAST_STATE_CHANGED, e => {
+    diag('cast state: ' + e.castState);
+    if (castListOpen && e.castState === cast.framework.CastState.NO_DEVICES_AVAILABLE) unjamCasting();
+    render();
+  });
+  ctx.addEventListener(cast.framework.CastContextEventType.SESSION_STATE_CHANGED, e => {
+    const S = cast.framework.SessionState;
+    diag('session: ' + e.sessionState + (e.errorCode ? ' · error ' + e.errorCode : '')
+      + (e.session ? ' · ' + e.session.getCastDevice().friendlyName : ''));
+    if (e.sessionState === S.SESSION_STARTED) {
+      els.castBtn.classList.remove('nudge'); hideNotice();
+      try { sessionStorage.removeItem(UNJAM_KEY); } catch (err) {}
+      // A speaker was picked: whatever the phone was playing moves over to it.
+      const s = localStation || carryAfterUnjam;
+      carryAfterUnjam = null;
+      if (s) { stopHere(); loadStation(s); }
+    }
+    if (e.sessionState === S.SESSION_START_FAILED) showNotice('The speaker didn’t accept the connection. Try again.');
+    // Disconnecting carries the music back to the phone (unless the speaker was stopped).
+    if (e.sessionState === S.SESSION_ENDING) {
+      const r = remoteStation();
+      carryOver = r && r !== 'other' && castActive() && !speakerPaused() ? r : null;
+    }
+    if (e.sessionState === S.SESSION_ENDED) {
+      speakerLoading = speakerStation = null; speakerReconnecting = false;
+      if (carryOver) { const s = carryOver; carryOver = null; playHere(s); }
+    }
+    render();
+  });
+  render();
+};
+
+function loadStation(s) {
+  const session = ctx.getCurrentSession();
+  if (!session) return;
+  const info = new chrome.cast.media.MediaInfo(s.url, s.type);
+  info.streamType = chrome.cast.media.StreamType.LIVE;
+  const md = new chrome.cast.media.GenericMediaMetadata();
+  md.title = s.name;
+  md.subtitle = 'Synth Caster · ' + shortGenre(s);
+  info.metadata = md;
+  const req = new chrome.cast.media.LoadRequest(info);
+  req.autoplay = true;
+  hideNotice();
+  speakerLoading = s;
+  const t = performance.now();
+  loadStartedAt = t;
+  diag('sending ' + s.name + ' to ' + session.getCastDevice().friendlyName + ' · ' + s.url);
+  kickStart();
+  session.loadMedia(req).then(() => {
+    diag('speaker accepted ' + s.name + ' after ' + ((performance.now() - t) / 1000).toFixed(2) + 's');
+    kickStart();
+  }).catch(err => {
+    diag('speaker REFUSED ' + s.name + ' · ' + err);
+    if (speakerLoading !== s) return;
+    speakerLoading = null;
+    stationFailed(s, 'speaker refused: ' + err);
+    render();
+  });
+  render();
+}
+
+// The speaker's standard player often plays for half a second, then sits "buffering" for a
+// long time before the sound starts. A quick pause and play gets it going, so while a station
+// is starting the app watches for that stall and nudges the speaker, up to 4 times.
+const NUDGE_AFTER = 500, NUDGE_WINDOW = 60000;
+let nudgeUntil = 0, nudges = 0, nudgeTimer = null, kicking = false;
+function kickStart() { nudgeUntil = Date.now() + NUDGE_WINDOW; nudges = 0; watchStall(); }
+function watchStall() {
+  clearTimeout(nudgeTimer);
+  const PS = chrome.cast.media.PlayerState;
+  if (Date.now() > nudgeUntil || nudges >= 4 || player.playerState !== PS.BUFFERING) return;
+  nudgeTimer = setTimeout(() => {
+    const session = ctx.getCurrentSession();
+    const media = session && session.getMediaSession();
+    if (!media || player.playerState !== PS.BUFFERING) return;
+    nudges++;
+    kicking = true;
+    diag('nudge ' + nudges + ': speaker stalled buffering, pause + play');
+    const done = () => { kicking = false; render(); };
+    media.pause(new chrome.cast.media.PauseRequest(), () => media.play(new chrome.cast.media.PlayRequest(), done, done), done);
+  }, NUDGE_AFTER);
+}
+
+// Watches the speaker: notes when it's really playing, and restarts the station if its stream drops.
+let lastSpeakerState = null, loadStartedAt = 0;
+function onSpeakerState() {
+  const PS = chrome.cast.media.PlayerState;
+  if (player.playerState === lastSpeakerState) return;
+  const session = ctx.getCurrentSession();
+  const media = session && session.getMediaSession && session.getMediaSession();
+  diag('speaker player: ' + (player.playerState || 'none')
+    + (player.playerState === PS.IDLE && media && media.idleReason ? ' (' + media.idleReason + ')' : '')
+    + (loadStartedAt ? ' · ' + ((performance.now() - loadStartedAt) / 1000).toFixed(2) + 's since sending' : ''));
+  watchStall();
+  lastSpeakerState = player.playerState;
+  if (player.playerState === PS.PLAYING) {
+    const r = remoteStation();
+    speakerLoading = null; speakerRetries = 0; speakerReconnecting = false;
+    speakerStation = r && r !== 'other' ? r : null;
+    if (speakerStation) stationWorked(speakerStation);
+    return;
+  }
+  if (player.playerState !== PS.IDLE) return;
+  const IR = chrome.cast.media.IdleReason;
+  const why = media && media.idleReason;
+  // Never got going: this station doesn't play on the speaker.
+  if (speakerLoading && why === IR.ERROR) {
+    const s = speakerLoading; speakerLoading = null;
+    stationFailed(s, 'speaker error');
+    return;
+  }
+  if (!speakerStation) return;
+  const dropped = IR && (why === IR.ERROR || why === IR.FINISHED);
+  if (!dropped || speakerRetries >= 4) { speakerStation = null; speakerReconnecting = false; return; }
+  // Live radio never "finishes", so this is a dropped stream: try again with growing gaps.
+  speakerRetries++;
+  speakerReconnecting = true;
+  const s = speakerStation;
+  setTimeout(() => {
+    speakerReconnecting = false;
+    if (castConnected() && !castActive()) loadStation(s);
+    render();
+  }, 2000 * speakerRetries);
+}
+
+function remoteStation() {
+  const id = player && player.mediaInfo && player.mediaInfo.contentId;
+  return id ? STATIONS.find(s => s.url === id) || 'other' : null;
+}
+
+els.castBtn.addEventListener('click', () => {
+  if (!ctx) { showNotice('Casting to speakers needs Chrome (Android or computer). Listening on this device works everywhere.'); return; }
+  const t = performance.now();
+  diag('cast button tapped (state ' + ctx.getCastState() + ')');
+  els.castBtn.classList.remove('nudge');
+  castListOpen = true;
+  ctx.requestSession().then(
+    () => { castListOpen = false; diag('speaker picked after ' + ((performance.now() - t) / 1000).toFixed(2) + 's'); },
+    err => {
+      castListOpen = false;
+      diag('connect FAILED · ' + err);
+      if (err === 'invalid_parameter') unjamCasting();
+    });
+});
+
+// On Android Chrome, opening the speaker list right after the app opens can make the phone
+// re-scan and cut the list off. When that happens the app refreshes itself and asks for one
+// more tap (the same fix as Halloween Caster).
+const UNJAM_KEY = 'sc_unjam';
+let castListOpen = false, carryAfterUnjam = null;
+function readUnjam() { try { return JSON.parse(sessionStorage.getItem(UNJAM_KEY)) || { at: 0 }; } catch (e) { return { at: 0 }; } }
+function unjamCasting() {
+  if (Date.now() - readUnjam().at < 30000) { showNotice('Couldn’t connect to the speaker. Pull down to refresh and try again.'); return; }
+  try { sessionStorage.setItem(UNJAM_KEY, JSON.stringify({ at: Date.now(), playing: localStation ? localStation.id : null })); }
+  catch (e) { return; }
+  diag('speaker list cut off by the phone re-scanning: refreshing');
+  location.reload();
+}
+function afterUnjam() {
+  const u = readUnjam();
+  if (!u.at || Date.now() - u.at > 30000) return;
+  const s = u.playing && STATIONS.find(x => x.id === u.playing);
+  if (s) {
+    carryAfterUnjam = s;
+    playHere(s);
+    setTimeout(() => { if (carryAfterUnjam === s) carryAfterUnjam = null; }, 60000);
+  }
+  showNotice('Ready. Tap the cast button again to pick your speaker.');
+  els.castBtn.classList.add('nudge');
+}
+
+const RESUME_WITHIN = 3 * 60000;
+let pausedAt = 0;
+const speakerPaused = () => !!player && player.playerState === chrome.cast.media.PlayerState.PAUSED;
+function toggleSpeaker() {
+  if (!speakerPaused()) { pausedAt = Date.now(); ctrl.playOrPause(); return; }
+  if (Date.now() - pausedAt < RESUME_WITHIN) { ctrl.playOrPause(); return; }
+  const s = remoteStation();
+  if (s && s !== 'other') loadStation(s);
+}
+const castConnected = () => !!(ctx && ctx.getCurrentSession());
+function castActive() {
+  return !!ctx && !!player && player.isMediaLoaded && !!player.playerState
+    && player.playerState !== chrome.cast.media.PlayerState.IDLE;
+}
+
+els.playBtn.addEventListener('click', () => {
+  if (castActive()) { remoteStation() && remoteStation() !== 'other' ? toggleSpeaker() : ctrl.stop(); }
+  else if (localStation) stopHere();
+  else if (selected) chooseStation(selected, true);
+  else goNext();
+});
+els.muteBtn.addEventListener('click', () => {
+  if (castConnected()) ctrl.muteOrUnmute();
+  else { audio.muted = !audio.muted; render(); }
+});
+let volTimer = null;
+els.vol.addEventListener('input', () => {
+  safeSet('sc_vol', els.vol.value);
+  if (!castConnected()) { audio.volume = els.vol.value / 100; return; }
+  clearTimeout(volTimer);
+  volTimer = setTimeout(() => { player.volumeLevel = els.vol.value / 100; ctrl.setVolumeLevel(); }, 60);
+});
+els.disconnectBtn.addEventListener('click', () => { if (ctx && ctx.getCurrentSession()) ctx.endCurrentSession(true); });
+
+// ── Listening on this device ────────────────────
+const audio = new Audio();
+audio.preload = 'none';
+let localStation = null, hereLive = false, reconnecting = false;
+let retry = 0, retryTimer = null, stallTimer = null, startTimer = null;
+const RETRY_DELAYS = [1, 2, 4, 8, 15, 30];
+els.vol.value = safeGet('sc_vol') || 80;
+audio.volume = els.vol.value / 100;
+
+function clearRetry() {
+  clearTimeout(retryTimer); clearTimeout(stallTimer); clearTimeout(startTimer);
+  retryTimer = stallTimer = startTimer = null;
+}
+
+function playHere(s) {
+  diag('playing ' + s.name + ' on this device · ' + s.url);
+  selected = s;
+  localStation = s;
+  hereLive = false; everPlayed = false;
+  clearRetry(); retry = 0; reconnecting = false;
+  audio.src = s.url;
+  audio.volume = els.vol.value / 100;
+  hideNotice();
+  // Not started within 15 seconds: count it as not playing.
+  startTimer = setTimeout(() => { if (localStation === s && !hereLive) { stopHere(true); stationFailed(s, 'no sound after 15s'); } }, 15000);
+  audio.play().catch(err => {
+    if (localStation !== s || err.name !== 'NotAllowedError') return;
+    localStation = null;
+    showNotice('This device couldn’t play ' + s.name + ' (' + err.message + ').');
+    render();
+  });
+  updateMediaSession();
+  render();
+}
+
+function stopHere(keepNotice) {
+  if (!localStation) return;
+  diag('stopped ' + localStation.name + ' on this device');
+  localStation = null;
+  hereLive = false;
+  clearRetry(); retry = 0; reconnecting = false;
+  audio.pause();
+  audio.removeAttribute('src');
+  audio.load();
+  render();
+}
+
+// The stream dropped mid-play: reconnect (at "now", since it's live radio), with growing gaps.
+function reconnectHere() {
+  clearRetry();
+  if (!localStation) return;
+  hereLive = false;
+  if (!navigator.onLine) { reconnecting = 'offline'; render(); return; }
+  const delay = RETRY_DELAYS[Math.min(retry, RETRY_DELAYS.length - 1)] * 1000;
+  retry++;
+  reconnecting = true;
+  render();
+  retryTimer = setTimeout(() => {
+    retryTimer = null;
+    if (!localStation) return;
+    audio.src = localStation.url;
+    audio.play().catch(() => {});
+    stallTimer = setTimeout(reconnectHere, 10000);
+  }, delay);
+}
+
+let everPlayed = false;   // this play got sound at least once (so an error is a drop-out, not a dead station)
+audio.addEventListener('playing', () => {
+  hereLive = true; everPlayed = true;
+  clearRetry(); retry = 0; reconnecting = false;
+  if (localStation) stationWorked(localStation);
+  render();
+});
+const stalled = () => {
+  if (!localStation || !hereLive || stallTimer || retryTimer) return;
+  hereLive = false;
+  stallTimer = setTimeout(reconnectHere, 8000);
+  render();
+};
+audio.addEventListener('waiting', stalled);
+audio.addEventListener('stalled', stalled);
+audio.addEventListener('error', () => {
+  if (!localStation || retryTimer) return;
+  const s = localStation;
+  if (!everPlayed && retry === 0) {
+    // Never started: the station is down, or its link can't play here.
+    const code = audio.error && audio.error.code;
+    stopHere();
+    stationFailed(s, 'wouldn’t start (error ' + code + ')');
+    return;
+  }
+  reconnectHere();
+});
+window.addEventListener('online', () => { if (localStation && reconnecting === 'offline') { retry = 0; reconnectHere(); } });
+
+// Lock screen and headphone controls, including skip to the next station.
+function updateMediaSession() {
+  if (!('mediaSession' in navigator)) return;
+  const s = playingStation() || selected;
+  if (!s) return;
+  navigator.mediaSession.metadata = new MediaMetadata({
+    title: s.name, artist: shortGenre(s), album: 'Synth Caster',
+    artwork: [{ src: 'icon-512.png', sizes: '512x512', type: 'image/png' }],
+  });
+}
+if ('mediaSession' in navigator) {
+  const ms = navigator.mediaSession;
+  ms.setActionHandler('play', () => { if (!localStation && selected) chooseStation(selected, true); });
+  ms.setActionHandler('pause', () => stopHere());
+  ms.setActionHandler('stop', () => stopHere());
+  ms.setActionHandler('nexttrack', goNext);
+  ms.setActionHandler('previoustrack', goPrev);
+}
+
+// ── Drawing the screen ──────────────────────────
+function playingStation() {
+  if (castConnected()) {
+    const r = remoteStation();
+    return speakerLoading || (r && r !== 'other' && castActive() ? r : null);
+  }
+  return localStation;
+}
+function showNotice(msg) { els.notice.textContent = msg; els.notice.hidden = false; }
+function hideNotice() { els.notice.hidden = true; }
+
+const ICON_PLAY = '<path d="M8 5v14l11-7z"/>', ICON_STOP = '<path d="M6 6h12v12H6z"/>', ICON_PAUSE = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+const ICON_VOL = '<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>';
+const ICON_MUTED = '<path d="M16.5 12A4.5 4.5 0 0 0 14 7.97v2.21l2.45 2.45c.03-.2.05-.41.05-.63zM19 12c0 .94-.2 1.82-.54 2.64l1.51 1.51A8.8 8.8 0 0 0 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3 3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06a8.99 8.99 0 0 0 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4 9.91 6.09 12 8.18V4z"/>';
+
+let lastActiveId = null;
+function render() {
+  const CS = window.cast && cast.framework && cast.framework.CastState;
+  const state = ctx ? ctx.getCastState() : null;
+  const session = ctx && ctx.getCurrentSession();
+  const device = session && session.getCastDevice().friendlyName;
+  els.castBtn.classList.toggle('connected', !!session);
+  els.castBtn.classList.toggle('connecting', !!CS && state === CS.CONNECTING);
+  if (ctx) els.castLabel.textContent = device || (state === CS.CONNECTING ? 'Connecting…' : 'Speakers');
+  els.disconnectBtn.hidden = !session;
+  els.shuffleBtn.classList.toggle('on', shuffle);
+  els.shuffleBtn.setAttribute('aria-pressed', shuffle);
+
+  const s = playingStation() || selected;
+  els.badge.textContent = s ? iconFor(s) : '🌆';
+  els.nowName.textContent = s ? s.name : 'Pick a station, or tap shuffle';
+  let where = 'Ready', st = '', live = false, icon = ICON_PLAY;
+  if (session) {
+    where = 'On ' + device;
+    const PS = chrome.cast.media.PlayerState;
+    if (speakerLoading) { st = 'Starting on the speaker…'; icon = ICON_STOP; }
+    else if (speakerReconnecting) { st = 'Reconnecting…'; icon = ICON_STOP; }
+    else if (castActive() && player.playerState === PS.PAUSED && !kicking) { st = 'Paused'; icon = ICON_PLAY; }
+    else if (castActive() && player.playerState === PS.BUFFERING) { st = 'Buffering…'; icon = ICON_PAUSE; }
+    else if (castActive()) { st = 'Playing'; live = true; icon = remoteStation() === 'other' ? ICON_STOP : ICON_PAUSE; }
+    else st = s ? 'Stopped' : '';
+    if (castConnected() && player && player.isMuted) st += ' · muted';
+  } else if (localStation) {
+    where = 'On this device';
+    icon = ICON_STOP;
+    if (reconnecting === 'offline') st = 'No signal. Waiting to reconnect…';
+    else if (reconnecting) st = 'Reconnecting…';
+    else if (hereLive) { st = 'Playing'; live = true; }
+    else st = 'Tuning in…';
+    if (audio.muted) st += ' · muted';
+  }
+  if (s && shuffle) where += ' · shuffle';
+  els.where.textContent = where;
+  els.nowState.textContent = st;
+  els.nowState.classList.toggle('live', live);
+  els.playIcon.innerHTML = icon;
+  els.playBtn.setAttribute('aria-label', icon === ICON_PLAY ? 'Play' : icon === ICON_PAUSE ? 'Pause' : 'Stop');
+  const muted = castConnected() ? player && player.isMuted : audio.muted;
+  els.volIcon.innerHTML = muted ? ICON_MUTED : ICON_VOL;
+  if (castConnected() && player && !volTimer) els.vol.value = Math.round((player.volumeLevel || 0) * 100);
+  document.title = s && (live || localStation) ? s.name + ' · Synth Caster' : 'Synth Caster';
+
+  const activeId = (playingStation() || {}).id || null;
+  if (activeId !== lastActiveId) { lastActiveId = activeId; renderList(); updateMediaSession(); }
+}
+
+// Tap the title 5 times within 3 seconds to open the diagnostic log.
+{
+  const dlg = $('diagDlg'), text = $('diagText');
+  let taps = [];
+  document.querySelector('h1').addEventListener('click', () => {
+    const now = Date.now();
+    taps = taps.filter(x => now - x < 3000).concat(now);
+    if (taps.length < 5) return;
+    taps = [];
+    text.textContent = diagLines.join('\n') || '(empty)';
+    dlg.showModal();
+    text.scrollTop = text.scrollHeight;
+  });
+  $('diagCopy').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(diagLines.join('\n')); $('diagCopy').textContent = 'Copied ✓'; }
+    catch (e) { getSelection().selectAllChildren(text); $('diagCopy').textContent = 'Selected: copy it'; }
+    setTimeout(() => { $('diagCopy').textContent = 'Copy log'; }, 2500);
+  });
+  $('diagClear').addEventListener('click', () => {
+    diagLines = [];
+    try { localStorage.removeItem(DIAG_KEY); } catch (e) {}
+    text.textContent = '(empty)';
+  });
+}
+
+// ── Start up ────────────────────────────────────
+async function start() {
+  try {
+    const res = await fetch('stations.json', { cache: 'no-cache' });
+    STATIONS = await res.json();
+  } catch (e) {
+    showNotice('Couldn’t load the station list. Check your connection and refresh.');
+    diag('station list failed: ' + e);
+    return;
+  }
+  STATIONS.forEach(s => {
+    s.sortName = norm(s.name).replace(/^[^a-z0-9]+/, '');
+    s.search = norm(s.name + ' ' + s.group + ' ' + (s.tags || ''));
+  });
+  if (filter !== 'all' && filter !== 'favs' && !GENRES.some(g => g.id === filter)) filter = 'all';
+  reshuffleOrder();
+  selected = STATIONS.find(s => s.id === safeGet('sc_station')) || null;
+  diag('stations loaded: ' + STATIONS.length);
+  renderChips();
+  renderList();
+  render();
+  // The cast library loads after the station list, so a rejoined speaker can be matched to its station.
+  const cs = document.createElement('script');
+  cs.src = 'https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1';
+  cs.onerror = () => { diag('cast library failed to load'); els.castLabel.textContent = 'Unavailable'; };
+  document.head.appendChild(cs);
+}
+start();
+
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>
