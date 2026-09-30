@@ -9,6 +9,7 @@ A sister app to [🎃 Halloween Caster](https://cc666debug.github.io/halloween-c
 ## What it does
 
 - **Hundreds of stations**, every one tested before it went in: Nightride FM, SomaFM, Halloween Radio (every channel), DeadAir, Rainwave, Nectarine and many more.
+- **Song names.** About half the stations (marked ♪ in the list) show the song playing now, on screen and on your lock screen. That includes Nightride FM, SomaFM, every Halloween Radio channel, DeadAir and Rainwave.
 - **Search.** Type any part of a name or genre, like `horror`, `ebm`, `nightride` or `8-bit`.
 - **Genre filters:** 🎃 Halloween, 🌆 Synthwave, 🦇 Darkwave & Goth, 👾 Chiptune & Game, plus ★ Favorites.
 - **Sort** A → Z, Z → A, by genre, recently played, favorites first, or random.

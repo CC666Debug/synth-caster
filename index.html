@@ -73,6 +73,8 @@
   }
   .now .label { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
   .now .title { font-weight: 650; font-size: 17px; margin-top: 2px; overflow-wrap: anywhere; }
+  .now .song { font-size: 14px; margin-top: 4px; color: var(--accent-2); overflow-wrap: anywhere; }
+  .now .song:empty { display: none; }
   .now .state { font-size: 13px; margin-top: 4px; color: var(--muted); }
   .now .state.live { color: var(--good); }
 
@@ -161,6 +163,7 @@
     <div>
       <div class="label" id="where">Ready</div>
       <div class="title" id="nowName">Pick a station, or tap shuffle</div>
+      <div class="song" id="nowSong"></div>
       <div class="state" id="nowState"></div>
     </div>
   </section>
@@ -228,11 +231,11 @@
 </dialog>
 
 <script>
-const VERSION = '1.0.0';
+const VERSION = '1.1.0';
 const $ = id => document.getElementById(id);
 const els = {
   castBtn: $('castBtn'), castLabel: $('castLabel'), notice: $('notice'), where: $('where'),
-  nowName: $('nowName'), nowState: $('nowState'), badge: $('badge'), playBtn: $('playBtn'), playIcon: $('playIcon'),
+  nowName: $('nowName'), nowSong: $('nowSong'), nowState: $('nowState'), badge: $('badge'), playBtn: $('playBtn'), playIcon: $('playIcon'),
   prevBtn: $('prevBtn'), nextBtn: $('nextBtn'), shuffleBtn: $('shuffleBtn'), disconnectBtn: $('disconnectBtn'),
   muteBtn: $('muteBtn'), volIcon: $('volIcon'), vol: $('vol'), q: $('q'), qClear: $('qClear'),
   chips: $('chips'), sort: $('sort'), count: $('count'), list: $('list'),
@@ -332,7 +335,7 @@ function renderList() {
     const row = document.createElement('div');
     row.className = 'st' + (s === playingStation() ? ' active' : '') + (failed[s.id] ? ' failed' : '');
     row.innerHTML = `<button class="pick"><span class="nm"><span class="dot"></span>${esc(s.name)}</span>`
-      + `<span class="gr">${iconFor(s)} ${esc(shortGenre(s))}${failed[s.id] ? ' · didn’t play last time' : s.insecure ? ' · older link, may not play on phones' : ''}</span></button>`
+      + `<span class="gr">${iconFor(s)} ${esc(shortGenre(s))}${s.meta ? ' · ♪ song names' : ''}${failed[s.id] ? ' · didn’t play last time' : s.insecure ? ' · older link, may not play on phones' : ''}</span></button>`
       + `<button class="star${favs.has(s.id) ? ' on' : ''}" aria-label="${favs.has(s.id) ? 'Remove from' : 'Add to'} favorites">${favs.has(s.id) ? '★' : '☆'}</button>`;
     row.querySelector('.pick').addEventListener('click', () => chooseStation(s));
     row.querySelector('.star').addEventListener('click', () => toggleFav(s));
@@ -767,13 +770,81 @@ audio.addEventListener('error', () => {
 });
 window.addEventListener('online', () => { if (localStation && reconnecting === 'offline') { retry = 0; reconnectHere(); } });
 
+// ── Song names ──────────────────────────────────
+// About half the stations say what's playing through a web address the app can read
+// (found and saved in stations.json as "meta"). Only the playing station is checked.
+let song = '', metaStation = null, metaTimer = null, metaES = null;
+const META_EVERY = 15000;
+const JUNK_SONG = /azuracast|^unknown|^track$|^-+$|^\s*$/i;
+const pair = (a, t) => [a, t].map(x => (x || '').trim()).filter(Boolean).join(' – ');
+
+async function fetchSong(m) {
+  const j = async u => (await fetch(u, { cache: 'no-store' })).json();
+  switch (m.k) {
+    case 'soma': { const x = (await j(`https://somafm.com/songs/${m.id}.json`)).songs[0]; return pair(x.artist, x.title); }
+    case 'laut': { const x = await j(`https://api.laut.fm/station/${m.id}/current_song`); return pair(x.artist && x.artist.name, x.title); }
+    case 'rainwave': { const x = (await j(`https://rainwave.cc/api4/info?sid=${m.id}`)).sched_current.songs[0]; return pair(x.artists.map(a => a.name).join(', '), x.title); }
+    case 'live365': { const x = (await j(`https://api.live365.com/station/${m.id}`))['current-track']; return pair(x.artist, x.title); }
+    case 'radioco': return (await j(`https://public.radio.co/stations/${m.id}/status`)).current_track.title;
+    case 'azura': { const x = (await j(m.u)).now_playing.song; return pair(x.artist, x.title); }
+    case 'icecast': {
+      const src = [].concat((await j(m.u)).icestats.source || []);
+      const x = src.find(z => { try { return new URL(z.listenurl).pathname === m.m; } catch (e) { return false; } });
+      return x ? pair(x.artist, x.title) : '';
+    }
+  }
+  return '';
+}
+
+function setSong(s, text) {
+  if (s !== metaStation) return;
+  text = (text || '').replace(/\s+/g, ' ').trim();
+  if (JUNK_SONG.test(text) || text.toLowerCase() === s.name.toLowerCase()) text = '';
+  if (text === song) return;
+  song = text;
+  if (song) diag('song: ' + song);
+  els.nowSong.textContent = song ? '♪ ' + song : '';
+  updateMediaSession();
+}
+
+function stopMeta() {
+  clearInterval(metaTimer); metaTimer = null;
+  if (metaES) { metaES.close(); metaES = null; }
+  metaStation = null;
+  song = ''; els.nowSong.textContent = '';
+}
+
+function startMeta(s) {
+  if (s === metaStation) return;
+  stopMeta();
+  if (!s || !s.meta) return;
+  metaStation = s;
+  const m = s.meta;
+  // Nightride and Zeno push new songs as they start; the rest are checked every 15 seconds.
+  if (m.k === 'nightride' || m.k === 'zeno') {
+    metaES = new EventSource(m.k === 'nightride' ? 'https://nightride.fm/meta' : `https://api.zeno.fm/mounts/metadata/subscribe/${m.id}`);
+    metaES.onmessage = e => {
+      try {
+        const d = JSON.parse(e.data);
+        if (m.k === 'zeno') setSong(s, d.streamTitle);
+        else [].concat(d).filter(x => x.station === m.id).forEach(x => setSong(s, pair(x.artist, x.title)));
+      } catch (err) {}
+    };
+    return;
+  }
+  const check = () => fetchSong(m).then(t => setSong(s, t), err => diag('song check failed for ' + s.name + ': ' + err));
+  check();
+  metaTimer = setInterval(check, META_EVERY);
+}
+
 // Lock screen and headphone controls, including skip to the next station.
 function updateMediaSession() {
   if (!('mediaSession' in navigator)) return;
   const s = playingStation() || selected;
   if (!s) return;
+  const sg = s === metaStation ? song : '';
   navigator.mediaSession.metadata = new MediaMetadata({
-    title: s.name, artist: shortGenre(s), album: 'Synth Caster',
+    title: sg || s.name, artist: sg ? s.name : shortGenre(s), album: 'Synth Caster',
     artwork: [{ src: 'icon-512.png', sizes: '512x512', type: 'image/png' }],
   });
 }
@@ -849,7 +920,7 @@ function render() {
   document.title = s && (live || localStation) ? s.name + ' · Synth Caster' : 'Synth Caster';
 
   const activeId = (playingStation() || {}).id || null;
-  if (activeId !== lastActiveId) { lastActiveId = activeId; renderList(); updateMediaSession(); }
+  if (activeId !== lastActiveId) { lastActiveId = activeId; startMeta(playingStation()); renderList(); updateMediaSession(); }
 }
 
 // Tap the title 5 times within 3 seconds to open the diagnostic log.
@@ -888,7 +959,7 @@ async function start() {
     return;
   }
   STATIONS.forEach(s => {
-    s.sortName = norm(s.name).replace(/^[^a-z0-9]+/, '');
+    s.sortName = norm(s.name).replace(/^[^\p{L}\p{N}]+/u, '');
     s.search = norm(s.name + ' ' + s.group + ' ' + (s.tags || ''));
   });
   if (filter !== 'all' && filter !== 'favs' && !GENRES.some(g => g.id === filter)) filter = 'all';
