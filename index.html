@@ -121,6 +121,7 @@
   .search button[hidden] { display: none; }
   .chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
   .chips::-webkit-scrollbar { display: none; }
+  @media (pointer: fine) { .chips { cursor: grab; } .chips.dragging { cursor: grabbing; user-select: none; } }
   .chip {
     flex: none; background: var(--surface); border: 1px solid var(--line); border-radius: 999px;
     padding: 7px 12px; font-size: 14px; white-space: nowrap; color: var(--muted);
@@ -245,7 +246,7 @@
 </dialog>
 
 <script>
-const VERSION = '1.4.0';
+const VERSION = '1.4.1';
 const $ = id => document.getElementById(id);
 const els = {
   castBtn: $('castBtn'), castLabel: $('castLabel'), notice: $('notice'), where: $('where'),
@@ -383,6 +384,30 @@ els.sort.addEventListener('change', () => {
   if (sortBy === 'random') reshuffleOrder();
   shown = PAGE; renderList(); listToTop();
 });
+// On a computer, the genre bar scrolls by click-and-drag or the mouse wheel (phones just swipe).
+{
+  const bar = els.chips;
+  let startX = 0, startScroll = 0, dragging = false, moved = false;
+  bar.addEventListener('pointerdown', e => {
+    if (e.pointerType !== 'mouse' || e.button !== 0) return;
+    dragging = true; moved = false;
+    startX = e.clientX; startScroll = bar.scrollLeft;
+  });
+  addEventListener('pointermove', e => {
+    if (!dragging) return;
+    const dx = e.clientX - startX;
+    if (Math.abs(dx) > 4) { moved = true; bar.classList.add('dragging'); }
+    if (moved) bar.scrollLeft = startScroll - dx;
+  });
+  addEventListener('pointerup', () => { dragging = false; bar.classList.remove('dragging'); });
+  // A drag shouldn't also pick the genre it ended on.
+  bar.addEventListener('click', e => { if (moved) { e.stopPropagation(); e.preventDefault(); moved = false; } }, true);
+  bar.addEventListener('wheel', e => {
+    if (!e.deltaY || bar.scrollWidth <= bar.clientWidth) return;
+    e.preventDefault();
+    bar.scrollLeft += e.deltaY;
+  }, { passive: false });
+}
 // A new search, genre or sort starts the list from its top.
 function listToTop() { if (scrollY > 0) scrollTo({ top: 0 }); }
 // Back to top: shows once you've scrolled a good way down the list.
