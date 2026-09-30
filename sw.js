@@ -11,7 +11,8 @@ self.addEventListener('install', e => {
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      // Only this app's old caches: Halloween Caster and Pagan Caster share this web address.
+      .then(keys => Promise.all(keys.filter(k => k.startsWith('sc-') && k !== CACHE).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
