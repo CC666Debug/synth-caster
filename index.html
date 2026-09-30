@@ -63,46 +63,45 @@
   }
   .notice[hidden] { display: none; }
 
-  .now {
+  /* Now playing and the controls share one slim card. */
+  .player {
     background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
-    padding: 16px; display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 14px; align-items: center;
+    padding: 10px 12px 6px; display: flex; flex-direction: column; gap: 4px;
   }
+  .now { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 10px; align-items: center; }
   .badge {
-    width: 64px; height: 64px; border-radius: 12px; display: grid; place-items: center; font-size: 30px;
+    width: 44px; height: 44px; border-radius: 10px; display: grid; place-items: center; font-size: 22px;
     background: linear-gradient(135deg, #3a1a5c, #13304a);
   }
-  .now .label { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
-  .now .title { font-weight: 650; font-size: 17px; margin-top: 2px; overflow-wrap: anywhere; }
-  .now .song { font-size: 14px; margin-top: 4px; color: var(--accent-2); overflow-wrap: anywhere; }
+  .now .label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .now .label .state { text-transform: none; letter-spacing: 0; }
+  .now .label .state.live { color: var(--good); }
+  .now .title { font-weight: 650; font-size: 15px; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .now .song { font-size: 13px; color: var(--accent-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .now .song:empty { display: none; }
-  .now .state { font-size: 13px; margin-top: 4px; color: var(--muted); }
-  .now .state.live { color: var(--good); }
 
-  .controls {
-    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
-    padding: 12px 14px; display: flex; flex-direction: column; gap: 8px;
-  }
-  .row { display: flex; align-items: center; gap: 6px; }
-  .row.main { justify-content: center; gap: 14px; }
+  .row { display: flex; align-items: center; gap: 2px; }
   .play {
-    width: 58px; height: 58px; border-radius: 50%; flex: none;
+    width: 46px; height: 46px; border-radius: 50%; flex: none; margin: 0 2px;
     background: var(--accent); color: var(--accent-ink); display: grid; place-items: center;
   }
-  .play svg { width: 26px; height: 26px; }
-  .icon-btn { background: none; padding: 10px; display: grid; place-items: center; color: var(--muted); border-radius: 50%; }
-  .icon-btn svg { width: 24px; height: 24px; }
+  .play svg { width: 24px; height: 24px; }
+  .icon-btn { background: none; padding: 9px; display: grid; place-items: center; color: var(--muted); border-radius: 50%; flex: none; }
+  .icon-btn svg { width: 22px; height: 22px; }
   .icon-btn[hidden] { display: none; }
   .icon-btn.on { color: var(--accent-2); background: rgba(51, 225, 255, .12); }
-  input[type=range] { flex: 1; accent-color: var(--accent); height: 28px; min-width: 0; }
+  input[type=range] { flex: 1; accent-color: var(--accent); height: 28px; min-width: 40px; margin-left: 2px; }
 
-  /* The player stays pinned at the top while the station list scrolls under it. */
+  /* The player, search, genres and sort stay pinned at the top while the station list scrolls under them. */
   .top {
-    position: sticky; top: 0; z-index: 3; display: flex; flex-direction: column; gap: 10px;
-    background: var(--bg); padding: max(16px, env(safe-area-inset-top)) 0 10px;
+    position: sticky; top: 0; z-index: 3; display: flex; flex-direction: column; gap: 8px;
+    background: var(--bg); padding: max(12px, env(safe-area-inset-top)) 0 8px;
     box-shadow: 0 10px 12px -6px var(--bg);
   }
   @media (max-height: 560px) { .top { position: static; box-shadow: none; } }   /* phone on its side: too short to pin */
-  .finder { display: flex; flex-direction: column; gap: 10px; }
+  .finder { display: flex; flex-direction: column; gap: 8px; }
+  .search-row { display: flex; gap: 8px; }
+  .search-row .search { flex: 1; min-width: 0; }
   .to-top {
     position: fixed; right: 16px; bottom: max(20px, env(safe-area-inset-bottom)); z-index: 4;
     width: 50px; height: 50px; border-radius: 50%; display: grid; place-items: center;
@@ -114,7 +113,7 @@
   .search { position: relative; }
   .search input {
     width: 100%; font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--line);
-    border-radius: 12px; padding: 11px 38px 11px 40px; outline: none;
+    border-radius: 12px; padding: 10px 34px 10px 38px; outline: none;
   }
   .search input:focus { border-color: var(--accent-2); }
   .search svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--muted); }
@@ -128,11 +127,11 @@
   }
   .chip.on { background: var(--surface-2); border-color: var(--accent); color: var(--text); }
   .chip b { font-weight: 400; opacity: .7; margin-left: 4px; font-size: 12px; }
-  .sortbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--muted); }
-  .sortbar select {
-    font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--line);
-    border-radius: 8px; padding: 6px 8px;
+  .sort {
+    flex: none; width: 108px; font: inherit; font-size: 14px; color: var(--text); background: var(--surface);
+    border: 1px solid var(--line); border-radius: 12px; padding: 0 8px;
   }
+  .count { font-size: 12px; color: var(--muted); margin: -2px 0 -4px; }
 
   .list { display: flex; flex-direction: column; gap: 6px; }
   .st {
@@ -173,18 +172,16 @@
 
   <div class="notice" id="notice" hidden></div>
 
-  <section class="now" aria-live="polite">
+  <section class="player">
+  <div class="now" aria-live="polite">
     <div class="badge" id="badge">🌆</div>
-    <div>
-      <div class="label" id="where">Ready</div>
+    <div style="min-width:0">
+      <div class="label"><span id="where">Ready</span> <span class="state" id="nowState"></span></div>
       <div class="title" id="nowName">Pick a station, or tap shuffle</div>
       <div class="song" id="nowSong"></div>
-      <div class="state" id="nowState"></div>
     </div>
-  </section>
-
-  <section class="controls">
-    <div class="row main">
+  </div>
+    <div class="row">
       <button class="icon-btn" id="shuffleBtn" aria-label="Shuffle" title="Shuffle">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10.59 9.17 5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg>
       </button>
@@ -200,8 +197,6 @@
       <button class="icon-btn" id="disconnectBtn" aria-label="Disconnect speaker" title="Disconnect speaker" hidden>
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
       </button>
-    </div>
-    <div class="row">
       <button class="icon-btn" id="muteBtn" aria-label="Mute">
         <svg viewBox="0 0 24 24" fill="currentColor" id="volIcon"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
       </button>
@@ -209,29 +204,27 @@
     </div>
   </section>
 
-  </div>
-
   <section class="finder">
+    <div class="search-row">
     <div class="search">
       <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
       <input type="search" id="q" placeholder="Search stations" autocomplete="off" enterkeyhint="search" aria-label="Search stations">
       <button id="qClear" aria-label="Clear search" hidden>×</button>
     </div>
-    <div class="chips" id="chips" role="tablist" aria-label="Genres"></div>
-    <div class="sortbar">
-      <span id="count"></span>
-      <label>Sort
-        <select id="sort">
-          <option value="az">A → Z</option>
-          <option value="za">Z → A</option>
-          <option value="genre">Genre</option>
-          <option value="recent">Recently played</option>
-          <option value="favs">Favorites first</option>
-          <option value="random">Random</option>
-        </select>
-      </label>
+    <select class="sort" id="sort" aria-label="Sort stations">
+      <option value="az">A → Z</option>
+      <option value="za">Z → A</option>
+      <option value="genre">Genre</option>
+      <option value="recent">Recent</option>
+      <option value="favs">Favorites</option>
+      <option value="random">Random</option>
+    </select>
     </div>
+    <div class="chips" id="chips" role="tablist" aria-label="Genres"></div>
   </section>
+  </div>
+
+  <div class="count" id="count"></div>
 
   <section class="list" id="list" aria-label="Stations"></section>
 
@@ -252,7 +245,7 @@
 </dialog>
 
 <script>
-const VERSION = '1.3.0';
+const VERSION = '1.4.0';
 const $ = id => document.getElementById(id);
 const els = {
   castBtn: $('castBtn'), castLabel: $('castLabel'), notice: $('notice'), where: $('where'),
@@ -336,7 +329,7 @@ function renderChips() {
     b.setAttribute('role', 'tab');
     b.setAttribute('aria-selected', filter === c.id);
     b.innerHTML = `${c.label}<b>${counts[c.id]}</b>`;
-    b.addEventListener('click', () => { filter = c.id; safeSet('sc_filter', filter); shown = PAGE; renderChips(); renderList(); });
+    b.addEventListener('click', () => { filter = c.id; safeSet('sc_filter', filter); shown = PAGE; renderChips(); renderList(); listToTop(); });
     els.chips.appendChild(b);
   });
 }
@@ -382,19 +375,20 @@ let qTimer = null;
 els.q.addEventListener('input', () => {
   els.qClear.hidden = !els.q.value;
   clearTimeout(qTimer);
-  qTimer = setTimeout(() => { query = els.q.value; shown = PAGE; renderList(); }, 120);
+  qTimer = setTimeout(() => { query = els.q.value; shown = PAGE; renderList(); listToTop(); }, 120);
 });
-els.qClear.addEventListener('click', () => { els.q.value = ''; query = ''; els.qClear.hidden = true; shown = PAGE; renderList(); els.q.focus(); });
+els.qClear.addEventListener('click', () => { els.q.value = ''; query = ''; els.qClear.hidden = true; shown = PAGE; renderList(); listToTop(); els.q.focus(); });
 els.sort.addEventListener('change', () => {
   sortBy = els.sort.value; safeSet('sc_sort', sortBy);
   if (sortBy === 'random') reshuffleOrder();
-  shown = PAGE; renderList();
+  shown = PAGE; renderList(); listToTop();
 });
-// Back to top: shows once the search box has scrolled out of sight.
+// A new search, genre or sort starts the list from its top.
+function listToTop() { if (scrollY > 0) scrollTo({ top: 0 }); }
+// Back to top: shows once you've scrolled a good way down the list.
 {
-  const btn = $('toTop'), finder = document.querySelector('.finder'), top = document.querySelector('.top');
-  // Hidden while the search box still shows below the pinned player.
-  const check = () => btn.classList.toggle('hide', finder.getBoundingClientRect().top > top.getBoundingClientRect().bottom - 20);
+  const btn = $('toTop');
+  const check = () => btn.classList.toggle('hide', scrollY < 400);
   addEventListener('scroll', check, { passive: true });
   btn.addEventListener('click', () => scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }));
 }
@@ -939,7 +933,7 @@ function render() {
   }
   if (s && shuffle) where += ' · shuffle';
   els.where.textContent = where;
-  els.nowState.textContent = st;
+  els.nowState.textContent = st ? '· ' + st : '';
   els.nowState.classList.toggle('live', live);
   els.playIcon.innerHTML = icon;
   els.playBtn.setAttribute('aria-label', icon === ICON_PLAY ? 'Play' : icon === ICON_PAUSE ? 'Pause' : 'Stop');
