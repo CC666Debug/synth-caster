@@ -79,15 +79,12 @@
   .now .title { font-weight: 650; font-size: 15px; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .now .song { font-size: 13px; color: var(--accent-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .now .song:empty { display: none; }
-  /* Up next, listeners and LIVE, Save and Share, and the Recently played / Saved songs drawers (from Halloween Caster). */
+  /* Up next, listeners and LIVE, Save and Share, and the Recently played / Saved songs panel (from Halloween Caster). */
   .now .next { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .now .next:empty { display: none; }
   .now .label .crowd { text-transform: none; letter-spacing: 0; }
   .now .label .crowd b { color: #ff5a5a; font-weight: 700; }
   button.pill { cursor: pointer; }
-  .drawer { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 0 14px; }
-  .drawer summary { cursor: pointer; padding: 11px 0; font-weight: 650; font-size: 15px; }
-  .drawer summary span { color: var(--muted); font-weight: 400; }
   .drawer ul { list-style: none; margin: 0 0 8px; padding: 0; }
   .drawer li { border-top: 1px solid var(--line); padding: 9px 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 3px 10px; }
   .drawer .f-song { font-weight: 600; overflow-wrap: anywhere; }
@@ -97,6 +94,20 @@
   .drawer .li-btn { grid-column: 2; grid-row: 1 / span 3; align-self: center; background: none; color: var(--muted); font-size: 18px; padding: 8px; }
   .drawer .empty { color: var(--muted); font-size: 14px; margin: 0 0 12px; }
   .drawer .empty[hidden] { display: none; }
+  /* Recently played and Saved songs slide up from the bottom, over the page. */
+  dialog.sheet {
+    inset: auto 0 0 0; margin: 0 auto; width: min(560px, 100%); max-width: 100%; max-height: 78vh; overflow: auto;
+    padding: 0 16px max(14px, env(safe-area-inset-bottom)); border-radius: 18px 18px 0 0; border-bottom: 0;
+    animation: sheet-up .22s ease-out;
+  }
+  .sheet header { position: sticky; top: 0; z-index: 1; background: var(--surface); display: flex; align-items: center; gap: 10px; padding: 14px 0 8px; }
+  .sheet h2 { margin: 0; font-size: 17px; flex: 1; }
+  .sheet .close { background: none; color: var(--muted); font-size: 20px; padding: 4px 8px; }
+  .sheet .sub { color: var(--muted); font-size: 13px; margin: 0 0 6px; }
+  .sheet .sub:empty { display: none; }
+  .sheet section[hidden] { display: none; }
+  @keyframes sheet-up { from { transform: translateY(40px); opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { dialog.sheet { animation: none; } }
   .links { display: flex; gap: 8px; flex-wrap: wrap; padding: 2px 0 6px; }
   .links[hidden] { display: none; }
   .pill {
@@ -275,6 +286,8 @@
     <div class="links" id="songLinks" hidden>
       <button class="pill" id="favBtn" hidden>🤍 Save</button>
       <button class="pill" id="shareBtn" hidden>📤 Share</button>
+      <button class="pill" id="recentBtn" hidden>🕰️ Recent</button>
+      <button class="pill" id="savedBtn" hidden>📜 Saved songs</button>
     </div>
   </section>
   <div class="sleep-menu" id="sleepMenu" role="menu" aria-label="Sleep timer" hidden>
@@ -301,17 +314,6 @@
   </section>
   </div>
 
-  <details class="drawer" id="recent">
-    <summary>🕰️ Recently played <span id="recentOn"></span></summary>
-    <ul id="recentList"></ul>
-    <p class="empty" id="recentEmpty">Play a station marked ♪ and its last few songs show up here.</p>
-  </details>
-  <details class="drawer" id="savedSongs">
-    <summary>❤️ Saved songs <span id="savedCount"></span></summary>
-    <ul id="savedList"></ul>
-    <p class="empty" id="savedEmpty">Tap “🤍 Save” while a song plays to keep it here.</p>
-  </details>
-
   <div class="count" id="count"></div>
 
   <section class="list" id="list" aria-label="Stations"></section>
@@ -327,6 +329,20 @@
   </footer>
 </main>
 
+<dialog class="drawer sheet" id="songsSheet" aria-labelledby="sheetTitle">
+  <header><h2 id="sheetTitle">Songs</h2><button class="close" id="sheetClose" aria-label="Close">✕</button></header>
+  <section id="sheetRecent">
+    <p class="sub" id="recentOn"></p>
+    <ul id="recentList"></ul>
+    <p class="empty" id="recentEmpty">Play a station marked ♪ and its last few songs show up here.</p>
+  </section>
+  <section id="sheetSaved" hidden>
+    <p class="sub" id="savedCount"></p>
+    <ul id="savedList"></ul>
+    <p class="empty" id="savedEmpty">Tap “🤍 Save” while a song plays to keep it here.</p>
+  </section>
+</dialog>
+
 <dialog id="diagDlg">
   <div id="diagText"></div>
   <div class="dlg-btns">
@@ -337,7 +353,7 @@
 </dialog>
 
 <script>
-const VERSION = '1.8.0';
+const VERSION = '1.8.1';
 const $ = id => document.getElementById(id);
 const els = {
   castBtn: $('castBtn'), castLabel: $('castLabel'), notice: $('notice'), where: $('where'),
@@ -1159,6 +1175,9 @@ function renderSongInfo() {
   fav.hidden = $('shareBtn').hidden = !c;
   fav.textContent = on ? '❤️ Saved' : '🤍 Save';
   fav.classList.toggle('on', on);
+  $('recentBtn').hidden = !songInfo.history.length;
+  $('savedBtn').hidden = !saved.length;
+  $('savedBtn').textContent = '📜 Saved songs (' + saved.length + ')';
   renderLinks();
   // The drawers only redraw when something in them changed (or a minute passed, for the "min ago" times).
   const key = [metaStation && metaStation.id, songInfo.history.map(h => h.song).join('|'), saved.length, saved.map(savedKey).join('|'), Math.floor(Date.now() / 60000)].join('#');
@@ -1170,7 +1189,7 @@ function renderSongInfo() {
     const x = { song: h.song, station: metaStation ? metaStation.name : '' };
     return songRow(x, h.at ? timeAgo(h.at) : '', heartFor(x));
   }));
-  $('savedCount').textContent = saved.length ? '(' + saved.length + ')' : '';
+  $('savedCount').textContent = saved.length === 1 ? '1 song' : saved.length + ' songs';
   $('savedEmpty').hidden = saved.length > 0;
   $('savedList').replaceChildren(...saved.map(f => {
     const del = document.createElement('button'); del.className = 'li-btn'; del.textContent = '✕';
@@ -1178,6 +1197,22 @@ function renderSongInfo() {
     del.addEventListener('click', () => { saved = saved.filter(x => x !== f); safeSet(SAVED_KEY, JSON.stringify(saved)); renderSongInfo(); });
     return songRow(f, f.station + ' · ' + new Date(f.at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }), del, true);
   }));
+}
+// The Recent and Saved songs buttons open the panel at the bottom.
+{
+  const sheet = $('songsSheet');
+  const open = which => {
+    $('sheetRecent').hidden = which !== 'recent';
+    $('sheetSaved').hidden = which !== 'saved';
+    $('sheetTitle').textContent = which === 'recent' ? '🕰️ Recently played' : '📜 Saved songs';
+    lastDrawers = ''; renderSongInfo();
+    sheet.showModal();
+    sheet.scrollTop = 0;
+  };
+  $('recentBtn').addEventListener('click', () => open('recent'));
+  $('savedBtn').addEventListener('click', () => open('saved'));
+  $('sheetClose').addEventListener('click', () => sheet.close());
+  sheet.addEventListener('click', e => { if (e.target === sheet) sheet.close(); });   // a tap outside the panel closes it
 }
 // The row of song buttons shows when anything in it does.
 function renderLinks() { const row = $('songLinks'); row.hidden = ![...row.children].some(x => !x.hidden); }
