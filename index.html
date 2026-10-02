@@ -264,7 +264,7 @@
 </dialog>
 
 <script>
-const VERSION = '1.5.2';
+const VERSION = '1.6.0';
 const $ = id => document.getElementById(id);
 const els = {
   castBtn: $('castBtn'), castLabel: $('castLabel'), notice: $('notice'), where: $('where'),
@@ -297,6 +297,7 @@ const GENRES = [
   { id: 'Halloween', label: '🎃 Halloween', icon: '🎃' },
   { id: 'Synthwave / Retrowave', label: '🌆 Synthwave', icon: '🌆' },
   { id: 'Darkwave / Goth / Industrial', label: '🦇 Darkwave & Goth', icon: '🦇' },
+  { id: 'Synth-Pop & New Wave', label: '🎹 Synth-Pop & New Wave', icon: '🎹' },
   { id: 'Chiptune / Game', label: '👾 Chiptune & Game', icon: '👾' },
 ];
 const iconFor = s => (GENRES.find(g => g.id === s.group) || {}).icon || '📻';
