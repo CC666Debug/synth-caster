@@ -1,7 +1,7 @@
 {
   "name": "Synth Caster",
   "short_name": "Synth Caster",
-  "description": "Hundreds of synthwave, darkwave, Halloween and chiptune radio streams. Search, sort, shuffle, and cast to Nest speakers.",
+  "description": "Hundreds of synthwave, darkwave, synth-pop and chiptune radio streams. Search, sort, shuffle, and cast to Nest speakers.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

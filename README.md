@@ -1,17 +1,17 @@
 # 🌆 Synth Caster
 
-A free phone remote for hundreds of **synthwave, darkwave, Halloween and chiptune** internet radio stations. Listen on your phone, or cast to Google Nest speakers and speaker groups.
+A free phone remote for hundreds of **synthwave, darkwave, synth-pop and chiptune** internet radio stations. Listen on your phone, or cast to Google Nest speakers and speaker groups.
 
 **▶ Open the app: https://cc666debug.github.io/synth-caster/**
 
-A sister app to [🎃 Halloween Caster](https://cc666debug.github.io/halloween-caster/).
+A sister app to [🎃 Halloween Caster](https://cc666debug.github.io/halloween-caster/), which has Halloween Radio. All the Halloween stations are also in [Four Realms](https://cc666debug.github.io/four-realms/).
 
 ## What it does
 
-- **Hundreds of stations**, every one tested before it went in: Nightride FM, SomaFM, Halloween Radio (every channel), DeadAir, Rainwave, Nectarine and many more.
-- **Song names.** About half the stations (marked ♪ in the list) show the song playing now, on screen and on your lock screen. That includes Nightride FM, SomaFM, every Halloween Radio channel, DeadAir and Rainwave.
+- **Hundreds of stations**, every one tested before it went in: Nightride FM, SomaFM, Rainwave, Nectarine and many more.
+- **Song names.** About half the stations (marked ♪ in the list) show the song playing now, on screen and on your lock screen. That includes Nightride FM, SomaFM, Rainwave and hundreds of laut.fm stations.
 - **Search.** Type any part of a name or genre, like `horror`, `ebm`, `nightride` or `8-bit`.
-- **Genre filters:** 🎃 Halloween, 🌆 Synthwave, 🦇 Darkwave & Goth, 🎹 Synth-Pop & New Wave, 👾 Chiptune & Game, plus ★ Favorites.
+- **Genre filters:** 🌆 Synthwave, 🦇 Darkwave & Goth, 🎹 Synth-Pop & New Wave, 👾 Chiptune & Game, plus ★ Favorites.
 - **Sort** A → Z, Z → A, by genre, recently played, favorites first, or random.
 - **Shuffle.** Tap 🔀 to jump to a random station from the list you're looking at. ⏭ picks another; ⏮ goes back. If a station is down, shuffle skips to the next one by itself.
 - **Favorites.** Tap ☆ on any station.

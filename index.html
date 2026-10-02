@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Synth Caster</title>
-<meta name="description" content="Hundreds of synthwave, darkwave, Halloween and chiptune radio streams. Search, sort, shuffle, and cast to Nest speakers.">
+<meta name="description" content="Hundreds of synthwave, darkwave, synth-pop and chiptune radio streams. Search, sort, shuffle, and cast to Nest speakers.">
 <meta name="theme-color" content="#0d0a1a">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="favicon.png" type="image/png">
@@ -353,7 +353,7 @@
 </dialog>
 
 <script>
-const VERSION = '1.8.2';
+const VERSION = '1.9.0';
 const $ = id => document.getElementById(id);
 const els = {
   castBtn: $('castBtn'), castLabel: $('castLabel'), notice: $('notice'), where: $('where'),
@@ -383,7 +383,6 @@ diag('── opened · Synth Caster v' + VERSION + ' · ' + (openedAs === 'brows
   + (document.referrer ? ' · from ' + document.referrer : '') + ' · ' + navigator.userAgent);
 
 const GENRES = [
-  { id: 'Halloween', label: '🎃 Halloween', icon: '🎃' },
   { id: 'Synthwave / Retrowave', label: '🌆 Synthwave', icon: '🌆' },
   { id: 'Darkwave / Goth / Industrial', label: '🦇 Darkwave & Goth', icon: '🦇' },
   { id: 'Synth-Pop & New Wave', label: '🎹 Synth-Pop & New Wave', icon: '🎹' },
