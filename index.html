@@ -11,6 +11,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
   :root {
+    --neon: #ff4fb8;   /* the volume number's glow */
     --bg: #0d0a1a;
     --surface: #17122b;
     --surface-2: #221a3d;
@@ -155,7 +156,7 @@
   .icon-btn.on { color: var(--accent-2); background: rgba(51, 225, 255, .12); }
   /* The volume lives in a pop-up now (hold 🔊), so the row of controls spreads out. */
   #vol { display: none; }
-  @media (max-width: 370px) { .row .icon-btn { padding: 7px; } .volnum { min-width: 30px; margin-left: -4px; } }   /* narrow phones, with the ✕ while casting */
+  @media (max-width: 370px) { .row .icon-btn { padding: 7px; } .volnum { min-width: 40px; margin-left: -2px; font-size: 14px; } }   /* narrow phones, with the ✕ while casting */
   .row { justify-content: space-between; }
   #muteBtn { touch-action: none; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
   .volpop {
@@ -164,8 +165,9 @@
     display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none;
   }
   .volpop[hidden] { display: none; }
-  .volnum { min-width: 34px; margin-left: -6px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
-  .volpop .pct { font-size: 15px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+  /* The volume number in the realm's own neon, big enough to read across the room. */
+  .volnum { min-width: 44px; margin-left: -4px; font-size: 15px; font-weight: 800; color: var(--neon); text-shadow: 0 0 4px var(--neon), 0 0 12px var(--neon); font-variant-numeric: tabular-nums; }
+  .volpop .pct { font-size: 18px; font-weight: 800; color: var(--neon); text-shadow: 0 0 4px var(--neon), 0 0 12px var(--neon); font-variant-numeric: tabular-nums; }
   .volpop .track { position: relative; flex: 1; width: 12px; border-radius: 6px; background: var(--line); overflow: hidden; }
   .volpop .fill { position: absolute; left: 0; right: 0; bottom: 0; background: var(--accent); }
   .volpop .who { font-size: 10px; letter-spacing: .5px; text-transform: uppercase; color: var(--muted); }
@@ -375,7 +377,7 @@
 </dialog>
 
 <script>
-const VERSION = '1.10.0';
+const VERSION = '1.10.1';
 const $ = id => document.getElementById(id);
 const els = {
   castBtn: $('castBtn'), castLabel: $('castLabel'), notice: $('notice'), where: $('where'),
