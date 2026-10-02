@@ -156,7 +156,9 @@
   #diagText { max-height: 55vh; overflow: auto; font-size: 11px; white-space: pre-wrap; background: var(--bg); padding: 8px; border-radius: 8px; }
   .dlg-btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; }
   .dlg-btns button { background: var(--surface-2); border: 1px solid var(--line); padding: 8px 12px; border-radius: 8px; }
-  footer { text-align: center; color: var(--muted); font-size: 12px; padding-top: 6px; }
+  footer { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; color: var(--muted); font-size: 12px; padding: 14px 0 6px; }
+  footer .foot-tag { color: var(--accent-2); font-size: 13px; letter-spacing: 2px; text-transform: uppercase; }
+  footer .foot-ver { font-size: 11px; letter-spacing: 1.5px; opacity: .8; }
   footer a { color: var(--muted); }
   .now .label .sleep-left { text-transform: none; letter-spacing: 0; color: var(--accent-2); }
   .play { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; touch-action: manipulation; }
@@ -245,7 +247,11 @@
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7.41 15.41 12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg>
   </button>
 
-  <footer>A free fan app. Streams belong to their stations. <span id="ver"></span></footer>
+  <footer>
+    <div class="foot-tag">Neon never dies!</div>
+    <div>A free fan app; streams belong to their stations.</div>
+    <div class="foot-ver" id="ver"></div>
+  </footer>
 </main>
 
 <dialog id="diagDlg">
@@ -258,7 +264,7 @@
 </dialog>
 
 <script>
-const VERSION = '1.5.0';
+const VERSION = '1.5.1';
 const $ = id => document.getElementById(id);
 const els = {
   castBtn: $('castBtn'), castLabel: $('castLabel'), notice: $('notice'), where: $('where'),
@@ -267,7 +273,7 @@ const els = {
   muteBtn: $('muteBtn'), volIcon: $('volIcon'), vol: $('vol'), q: $('q'), qClear: $('qClear'),
   chips: $('chips'), sort: $('sort'), count: $('count'), list: $('list'),
 };
-$('ver').textContent = 'v' + VERSION;
+$('ver').textContent = 'V' + VERSION;
 
 function safeGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
 function safeSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
