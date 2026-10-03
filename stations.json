@@ -4035,5 +4035,104 @@
 "about": "Classic and modern game soundtracks and remixes",
 "url": "https://broadcast.shoutcheap.com/proxy/gbrgameb/stream",
 "type": "audio/mpeg"
+},
+{
+"id": "0cf68a6a",
+"name": "Radio Caprice - Gothic Metal",
+"group": "Darkwave / Goth / Industrial",
+"about": "Radio Caprice: gothic metal",
+"url": "http://79.120.77.11:9037/;",
+"type": "audio/aac",
+"insecure": true
+},
+{
+"id": "113dd312",
+"name": "Radio Caprice - Symphonic Gothic Metal",
+"group": "Darkwave / Goth / Industrial",
+"about": "Radio Caprice: symphonic gothic metal",
+"url": "http://213.141.131.10:8002/symphogoth",
+"type": "audio/aac",
+"insecure": true
+},
+{
+"id": "213f6357",
+"name": "Radio Caprice - Neue Deutsche Härte",
+"group": "Darkwave / Goth / Industrial",
+"about": "Radio Caprice: neue deutsche härte",
+"url": "http://213.141.131.10:8000/ndh",
+"type": "audio/aac",
+"insecure": true
+},
+{
+"id": "3d016863",
+"name": "Radio Caprice - Retrowave",
+"group": "Synthwave / Retrowave",
+"about": "Radio Caprice: retrowave",
+"url": "http://79.120.39.202:9125/",
+"type": "audio/aac",
+"insecure": true
+},
+{
+"id": "6cd10edb",
+"name": "Radio Caprice - Synthpop",
+"group": "Synth-Pop & New Wave",
+"about": "Radio Caprice: synthpop",
+"url": "http://79.120.77.11:8002/synthpop",
+"type": "audio/aac",
+"insecure": true
+},
+{
+"id": "a8a506ac",
+"name": "Radio Caprice - Electroclash / Synthcore / Tech Pop / Nouveau Disco",
+"group": "Synth-Pop & New Wave",
+"about": "Radio Caprice: electroclash synthcore tech pop nouveau disco",
+"url": "http://79.120.39.202:8000/electroclash",
+"type": "audio/aac",
+"insecure": true
+},
+{
+"id": "040a2fab",
+"name": "Radio Caprice - Post-Punk",
+"group": "Synth-Pop & New Wave",
+"about": "Radio Caprice: post punk",
+"url": "http://79.120.39.202:9071/",
+"type": "audio/aac",
+"insecure": true
+},
+{
+"id": "ecfc4a7a",
+"name": "Radio Caprice - Gothic Rock",
+"group": "Darkwave / Goth / Industrial",
+"about": "Radio Caprice: gothic rock",
+"url": "http://79.111.14.76:8002/gothicrock",
+"type": "audio/aac",
+"insecure": true
+},
+{
+"id": "c553d42b",
+"name": "Radio Caprice - Space Music",
+"group": "Darkwave / Goth / Industrial",
+"about": "Radio Caprice: space music",
+"url": "http://79.111.119.111:8000/spacemusic",
+"type": "audio/aac",
+"insecure": true
+},
+{
+"id": "d4f85b59",
+"name": "Radio Caprice - Drone Ambient",
+"group": "Darkwave / Goth / Industrial",
+"about": "Radio Caprice: drone ambient",
+"url": "http://79.111.119.111:9135/;",
+"type": "audio/aac",
+"insecure": true
+},
+{
+"id": "801d735d",
+"name": "Radio Caprice - Video Game Music",
+"group": "Chiptune / Game",
+"about": "Radio Caprice: video game music, soundtracks and scores",
+"url": "http://79.120.39.202:9139/",
+"type": "audio/aac",
+"insecure": true
 }
 ]
