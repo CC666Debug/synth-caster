@@ -15,6 +15,8 @@ A sister app to [🎃 Halloween Caster](https://cc666debug.github.io/halloween-c
 - **Sort** A → Z, Z → A, by genre, recently played, favorites first, or random.
 - **Shuffle.** Tap 🔀 to jump to a random station from the list you're looking at. ⏭ picks another; ⏮ goes back. If a station is down, shuffle skips to the next one by itself.
 - **Favorites.** Tap ☆ on any station.
+- **Saved songs.** Tap 🤍 while a song plays to keep it, then find it later on YouTube, YouTube Music or Spotify. Back it up to a folder once and every save or removal is copied there by itself, in a list file of this device's own (phone, tablet or PC), so devices sharing a synced folder never overwrite each other.
+- **Share the app** with the button at the bottom.
 - **Cast to speakers** with the cast button (Chrome on Android or a computer). Disconnect and the music carries on on your phone.
 - **Lock screen controls**, including skip to the next station.
 - **Keeps playing through drop-outs** and reconnects by itself.
@@ -24,6 +26,6 @@ Stations marked *older link* only have an `http://` address. Phones usually won'
 
 ## Privacy
 
-No accounts, no tracking. Favorites and settings stay on your device.
+No accounts. Favorites, saved songs and settings stay on your device. A cookie-free counter (GoatCounter) counts visits to the page; nothing personal is collected.
 
 Streams belong to their stations. This is a free fan project.
