@@ -463,7 +463,10 @@
 <script>
 // Old http:// stations (Radio Caprice etc.): once one has played on this device, it can play them (Android app, or Brave set to allow it), so stop skipping them.
 let httpOK = false; try { httpOK = localStorage.getItem('http_ok') === '1'; } catch (e) {}
-const VERSION = '1.19.0';
+// Brave won't load old http:// streams at a bare number address (Radio Caprice) inside this secure app,
+// but it will by name: sslip.io turns 1.2.3.4 into the name 1-2-3-4.sslip.io (free, same server). Speakers keep the original link.
+const hereSrc = u => location.protocol === 'https:' ? u.replace(/^http:\/\/(\d+)\.(\d+)\.(\d+)\.(\d+)(?=[:/]|$)/, 'http://$1-$2-$3-$4.sslip.io') : u;
+const VERSION = '1.20.0';
 const $ = id => document.getElementById(id);
 const els = {
   castBtn: $('castBtn'), castLabel: $('castLabel'), notice: $('notice'), where: $('where'),
@@ -1015,7 +1018,7 @@ function playHere(s) {
   localStation = s;
   hereLive = false; everPlayed = false;
   clearRetry(); retry = 0; reconnecting = false;
-  audio.src = s.url;
+  audio.src = hereSrc(s.url);
   audio.volume = els.vol.value / 100;
   hideNotice();
   // Not started within 15 seconds: count it as not playing.
@@ -1055,7 +1058,7 @@ function reconnectHere() {
   retryTimer = setTimeout(() => {
     retryTimer = null;
     if (!localStation) return;
-    audio.src = localStation.url;
+    audio.src = hereSrc(localStation.url);
     audio.play().catch(() => {});
     stallTimer = setTimeout(reconnectHere, 10000);
   }, delay);
