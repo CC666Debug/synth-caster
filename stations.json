@@ -1990,14 +1990,6 @@
 "type": "audio/mpeg"
 },
 {
-"id": "b72e10c5",
-"name": "Radio Caprice - Atmospheric/Ambient Black Metal",
-"group": "Darkwave / Goth / Industrial",
-"url": "http://79.120.39.202:8002/aabmds",
-"type": "audio/aac",
-"insecure": true
-},
-{
 "id": "30c336a2",
 "name": "Radio Caprice - Dark Cabaret",
 "group": "Darkwave / Goth / Industrial",
