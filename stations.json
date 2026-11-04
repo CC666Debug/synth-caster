@@ -1188,17 +1188,6 @@
 "type": "audio/mpeg"
 },
 {
-"id": "742c6419",
-"name": "Dark Metal-Radio",
-"group": "Darkwave / Goth / Industrial",
-"url": "https://stream.laut.fm/dark-metal-radio",
-"type": "audio/mpeg",
-"meta": {
-"k": "laut",
-"id": "dark-metal-radio"
-}
-},
-{
 "id": "4eb46126",
 "name": "Dark Star FM",
 "group": "Darkwave / Goth / Industrial",
@@ -1400,13 +1389,6 @@
 "k": "laut",
 "id": "ebm"
 }
-},
-{
-"id": "eefcb585",
-"name": "EchoBeat FM",
-"group": "Darkwave / Goth / Industrial",
-"url": "https://as100.globalhost1.com/8004/stream",
-"type": "audio/mpeg"
 },
 {
 "id": "7105fc6d",
@@ -2062,17 +2044,6 @@
 "insecure": true
 },
 {
-"id": "bfdb2435",
-"name": "Radio Estereo Playa",
-"group": "Darkwave / Goth / Industrial",
-"url": "https://stream.zeno.fm/rrcwp4ehorpvv",
-"type": "audio/mpeg",
-"meta": {
-"k": "zeno",
-"id": "rrcwp4ehorpvv"
-}
-},
-{
 "id": "d7666592",
 "name": "Radio Fonlord",
 "group": "Darkwave / Goth / Industrial",
@@ -2602,18 +2573,6 @@
 "meta": {
 "k": "laut",
 "id": "anderswelt"
-}
-},
-{
-"id": "26bc0c02",
-"name": "Numanme",
-"group": "Synth-Pop & New Wave",
-"about": "Synth-pop and new wave: B-Movie, Color Theory, Das Ich",
-"url": "https://numanme.stream.laut.fm/numanme",
-"type": "audio/mpeg",
-"meta": {
-"k": "laut",
-"id": "numanme"
 }
 },
 {
@@ -3780,6 +3739,19 @@
 "url": "http://79.111.119.111:9135/;",
 "type": "audio/aac",
 "insecure": true
+},
+{
+"name": "Abyss",
+"group": "Darkwave / Goth / Industrial",
+"about": "Metal, Gothic, EBM, Darkwave, Black Metal",
+"url": "https://abyss.stream.laut.fm/abyss?t302=2026-10-01_01-03-21&uuid=cb0b29de-407f-4665-6512-74667da282d3",
+"type": "audio/mpeg",
+"kbps": 128,
+"meta": {
+"k": "laut",
+"id": "abyss"
+},
+"id": "f658cb76"
 },
 {
 "id": "801d735d",
